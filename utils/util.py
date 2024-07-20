@@ -77,14 +77,14 @@ def plot_all(wavs, titles):
 
         D = librosa.amplitude_to_db(np.abs(librosa.stft(wav, hop_length=512)),ref=np.max)
         if nrows>1:
-            librosa.display.specshow(D, y_axis='linear', sr=16000, hop_length=512, x_axis='time', ax=axs[nrow][ncol])
+            librosa.display.specshow(D, y_axis='log', sr=16000, hop_length=512, x_axis='time', ax=axs[nrow][ncol])
             axs[nrow][ncol].set_title(titles[i])
             divider = make_axes_locatable(axs[ncol])
             cax = divider.append_axes('right', size='5%', pad=0.05)
             fig.colorbar(im, cax=cax, orientation='vertical')
             
         else:
-            im = librosa.display.specshow(D, y_axis='linear', sr=16000, hop_length=512, x_axis='time', ax=axs[ncol])
+            im = librosa.display.specshow(D, y_axis='log', sr=16000, hop_length=512, x_axis='time', ax=axs[ncol])
             axs[ncol].set_title(titles[i])
             divider = make_axes_locatable(axs[ncol])
             cax = divider.append_axes('right', size='5%', pad=0.05)

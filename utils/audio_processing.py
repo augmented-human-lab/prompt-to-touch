@@ -1,12 +1,14 @@
+import numpy as np
+from scipy.signal import butter, lfilter
 import torch
 import librosa
 from utils.util import * 
 
 def change_loudness(wav, loudness, loudness_meter):
     wav = pyln.normalize.peak(wav, -1.0)
-    print('Loudness before = ',loudness_meter.integrated_loudness(wav))
+    # print('Loudness before = ',loudness_meter.integrated_loudness(wav))
     wav = pyln.normalize.loudness(wav, loudness_meter.integrated_loudness(wav), loudness)
-    print('Loudness after = ',loudness_meter.integrated_loudness(wav))
+    # print('Loudness after = ',loudness_meter.integrated_loudness(wav))
 
 
     # Hack for gain increase. Only needed with IPython.Audio. In any case PyloudNorm clips samples on gain increase.
@@ -77,3 +79,32 @@ def compress_spectrogram_with_centroid(wav, limit=1000, hop_length=128, stft_cha
     wav_compressed = change_loudness(wav_compressed, loudness, loudness_meter)
         
     return wav_compressed
+
+
+def butter_bandpass(lowcut, highcut, fs, order=5,btype='bandpass'):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = butter(order, [low, high], btype=btype)
+    return b, a
+
+def butter_lowhighpass(cut, fs, order=5, btype='lowpass'):
+    nyq = 0.5 * fs
+    cut = cut / nyq
+    b, a = butter(order, cut, btype=btype)
+    return b, a
+
+def butter_bandpass_filter(data, highcut, fs,lowcut=None,  order=5, btype='bandpass'):
+    if btype=='bandpass' or btype=='bandstop':
+        b, a = butter_bandpass(lowcut, highcut, fs, order=order, btype=btype)
+    else:
+        b, a = butter_lowhighpass(highcut, fs, order=order, btype=btype)
+    y = lfilter(b, a, data)
+    return y
+
+#https://github.com/mayank12gt/Audio-Equalizer/blob/master/equalizer.py
+def butter_bandpass_filter_withgain(audio, lowcut, highcut, fs, order=5, btype='bandpass', gain=1): 
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order, btype=btype)
+    b = b * gain
+    y = lfilter(b, a, audio)
+    return y
