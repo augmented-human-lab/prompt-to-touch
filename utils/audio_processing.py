@@ -3,6 +3,16 @@ from scipy.signal import butter, lfilter
 import torch
 import librosa
 from utils.util import * 
+from utils.audio_filter import create_filter_block
+
+import pyfar as pf
+import pandas as pd
+
+def renormalize(n, range1, range2):
+    delta1 = range1[1] - range1[0]
+    delta2 = range2[1] - range2[0]
+    return (delta2 * (n - range1[0]) / delta1) + range2[0]
+
 
 def change_loudness(wav, loudness, loudness_meter):
     wav = pyln.normalize.peak(wav, -1.0)
@@ -12,10 +22,10 @@ def change_loudness(wav, loudness, loudness_meter):
 
 
     # Hack for gain increase. Only needed with IPython.Audio. In any case PyloudNorm clips samples on gain increase.
-    if is_interactive(): #see util.py
-        if np.max(np.abs(wav))>1.0:
-            wav = pyln.normalize.peak(wav, -1.0)
-            print('Hack for gain increase for IPython. Peak norm if peaks>1.0 implemented. Loudness is = ',loudness_meter.integrated_loudness(wav))
+    # if is_interactive(): #see util.py
+    #     if np.max(np.abs(wav))>1.0:
+    #         wav = pyln.normalize.peak(wav, -1.0)
+    #         print('Hack for gain increase for IPython. Peak norm if peaks>1.0 implemented. Loudness is = ',loudness_meter.integrated_loudness(wav))
     
     return wav
 
@@ -54,7 +64,7 @@ def compress_spectrogram_with_centroid(wav, limit=1000, hop_length=128, stft_cha
     spec_centroids = librosa.feature.spectral_centroid(wav, sr=sample_rate)
     mean_spec_centroid = np.mean(spec_centroids)
     std_spec_centroid = np.std(spec_centroids)
-    print("Mean Spectral Centroid = ", mean_spec_centroid, np.std(spec_centroids))
+    print("Mean Spectral Centroid = ", mean_spec_centroid)
 
     fft_bins = librosa.fft_frequencies(sr=16000, n_fft=stft_channels)
     fft_bins_len = len(fft_bins)
@@ -81,6 +91,47 @@ def compress_spectrogram_with_centroid(wav, limit=1000, hop_length=128, stft_cha
     return wav_compressed
 
 
+def pitch_shift_centroid(wav, limit=1000, sample_rate=16000, loudness_meter=None, loudness=-14.0):
+    spec_centroids = librosa.feature.spectral_centroid(wav, sr=sample_rate)
+    mean_spec_centroid = np.mean(spec_centroids)
+    
+
+    num_steps = 12 * np.log2(mean_spec_centroid/limit)
+    pitch_shifted_wav = librosa.effects.pitch_shift(wav, sr=sample_rate, n_steps=-1*num_steps)
+    print("Mean Spectral Centroid = ", mean_spec_centroid, " Pitch Shift Steps = ", num_steps)
+
+    wav_compressed = change_loudness(pitch_shifted_wav, loudness, loudness_meter)
+        
+    return wav_compressed
+
+
+def equalize_audio(wav, sample_rate=16000, loudness_meter=None, loudness=-14.0):
+    eq = create_filter_block(sample_rate)
+    eq.reset()
+    audio = eq.process_block(wav)
+    audio /= np.max(np.abs(audio))
+    if loudness_meter is not None:
+        audio = change_loudness(audio, loudness, loudness_meter)
+    return audio
+
+
+def equalize_audio_2(wav, sample_rate=16000, loudness_meter=None, loudness=-14.0):
+
+    df = pd.read_csv('freq-response-DRAKE-MF-BLACK-raw-1721643327.220492.csv')
+    new_vals = []
+    for i in df['accVal']:
+        new_vals.append(-1*renormalize(i, (np.min(df['accVal']),np.max(df['accVal'])), (0,0.5)))
+
+    y = pf.classes.audio.Signal(wav, sampling_rate=sample_rate)
+    for ind, freq_c in enumerate(df['freq']):
+        y = pf.dsp.filter.bell(signal=y, center_frequency=freq_c, gain=new_vals[ind], quality=4)
+        
+    audio = y._data[0]/np.max(np.abs(y._data[0]))
+    if loudness_meter is not None:
+        audio = change_loudness(audio, loudness, loudness_meter)
+    return audio
+
+
 def butter_bandpass(lowcut, highcut, fs, order=5,btype='bandpass'):
     nyq = 0.5 * fs
     low = lowcut / nyq
@@ -102,6 +153,7 @@ def butter_bandpass_filter(data, highcut, fs,lowcut=None,  order=5, btype='bandp
     y = lfilter(b, a, data)
     return y
 
+# I eventually did not use this one. 
 #https://github.com/mayank12gt/Audio-Equalizer/blob/master/equalizer.py
 def butter_bandpass_filter_withgain(audio, lowcut, highcut, fs, order=5, btype='bandpass', gain=1): 
     b, a = butter_bandpass(lowcut, highcut, fs, order=order, btype=btype)

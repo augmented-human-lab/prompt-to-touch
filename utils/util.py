@@ -5,6 +5,8 @@ import librosa, librosa.display
 import soundfile as SF
 import noisereduce as nr
 from scipy.signal import butter, lfilter
+import json 
+from ipywidgets import widgets
 
 from torch_pitch_shift import pitch_shift
 
@@ -24,6 +26,12 @@ from tifresi.stft import GaussTF, GaussTruncTF
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+def get_config(filepath='../config/filter_config_MF.json'):
+    config = {}
+    with open(filepath, 'r') as f:
+        config = json.load(f)
+    return config
 
 #--------------------------------------------------------#
 #-----------------STFT related---------------------------#
@@ -69,32 +77,44 @@ def plot_all(wavs, titles):
     if len(wavs)%num_cols > 0:
         nrows += 1
     print('num rows=', nrows)
-    fig, axs = plt.subplots(nrows=nrows, ncols=num_cols, figsize=(25,3))
+    fig, axs = plt.subplots(nrows=nrows, ncols=num_cols, figsize=(25,9))
     for i, wav in enumerate(wavs):
         nrow = i//num_cols
         ncol = i%num_cols
-        IPython.display.display(IPython.display.Audio(wav, rate=16000, normalize=False))
+        # IPython.display.display(IPython.display.Audio(wav, rate=16000, normalize=False))
+        
+
 
         D = librosa.amplitude_to_db(np.abs(librosa.stft(wav, hop_length=512)),ref=np.max)
         if nrows>1:
             librosa.display.specshow(D, y_axis='log', sr=16000, hop_length=512, x_axis='time', ax=axs[nrow][ncol])
             axs[nrow][ncol].set_title(titles[i])
-            divider = make_axes_locatable(axs[ncol])
-            cax = divider.append_axes('right', size='5%', pad=0.05)
-            fig.colorbar(im, cax=cax, orientation='vertical')
+            # divider = make_axes_locatable(axs[ncol])
+            # cax = divider.append_axes('right', size='5%', pad=0.05)
+            # fig.colorbar(im, cax=cax, orientation='vertical')
             
         else:
             im = librosa.display.specshow(D, y_axis='log', sr=16000, hop_length=512, x_axis='time', ax=axs[ncol])
             axs[ncol].set_title(titles[i])
-            divider = make_axes_locatable(axs[ncol])
-            cax = divider.append_axes('right', size='5%', pad=0.05)
-            fig.colorbar(im, cax=cax, orientation='vertical')
+            # divider = make_axes_locatable(axs[ncol])
+            # cax = divider.append_axes('right', size='5%', pad=0.05)
+            # fig.colorbar(im, cax=cax, orientation='vertical')
+
+    # audio_widgets = []
+    # for wav in wavs[:2]:
+    #     out = widgets.Output()
+    #     with out:
+    #         IPython.display.display(IPython.display.Audio(data=wav, rate=16000, normalize=False))
+    #     print(out)
+    #     audio_widgets.append(out)
+    # widgets.HBox(audio_widgets)
+    # return widgets
 
 def plot_single(wav, title):
     IPython.display.display(IPython.display.Audio(wav, rate=16000, normalize=False))
 
     D = librosa.amplitude_to_db(np.abs(librosa.stft(wav, hop_length=512)),ref=np.max)
-    librosa.display.specshow(D, y_axis='linear', sr=16000, hop_length=512, x_axis='time')
+    librosa.display.specshow(D, y_axis='log', sr=16000, hop_length=512, x_axis='time')
     plt.title(title)
 
 

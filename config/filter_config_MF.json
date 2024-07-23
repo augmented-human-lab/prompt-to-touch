@@ -1,0 +1,27 @@
+[{
+    "type": "LPF",
+    "fc": 8000,
+    "Q": 0.707,
+    "gain": "None"
+},
+{
+    "type": "lowshelf",
+    "fc": 110,
+    "Q": 2,
+    "gain": 3
+    
+},
+{
+    "type": "highshelf",
+    "fc": 160,
+    "Q": 1.2,
+    "gain": 2
+    
+},
+{
+    "type": "highshelf",
+    "fc": 170,
+    "Q": 2,
+    "gain": 2
+    
+}]

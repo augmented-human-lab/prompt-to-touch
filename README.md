@@ -19,7 +19,8 @@ conda create -n prompt-to-touch python=3.10; conda activate prompt-to-touch
 /home/purnima/anaconda3/envs/prompt-to-touch/bin/pip install pyloudnorm
 /home/purnima/anaconda3/envs/prompt-to-touch/bin/pip install openai
 /home/purnima/anaconda3/envs/prompt-to-touch/bin/pip pip install ipython
-pip install audio_dspy
+pip install audio_dspy ---Not used anymore. Does not support neg Bell gain
+pip install pyfar
 ```
 audio_dspy: https://audio-dspy.readthedocs.io/en/latest/index.html (make note)
   
