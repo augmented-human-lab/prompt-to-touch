@@ -20,6 +20,15 @@ def convert_to_log(n, min, max, b=1):
 
     return k*np.log10(b+n)+c
 
+def renormalize_to_log(n, range1, range2, b=10):
+    min1, max1 = range1
+    min2, max2 = range2
+
+    k = (max2-min2)/(np.log10(b+max1)-np.log10(b+min1))
+    c = min2 - k*np.log10(b+min1)
+
+    return k*np.log10(b+n) + c
+
 
 def change_loudness(wav, loudness, loudness_meter):
     wav = pyln.normalize.peak(wav, -1.0)
@@ -131,7 +140,8 @@ def equalize_audio(wav, sample_rate=16000, loudness_meter=None, loudness=-14.0):
     new_vals = []
     for i in df['accVal']:
         #new_vals.append(-1*renormalize(i, (np.min(df['accVal']),np.max(df['accVal'])), (0,0.5)))
-        new_vals.append(-1*convert_to_log(i, np.min(df['accVal']), np.max(df['accVal'])))
+        #new_vals.append(-1*convert_to_log(i, np.min(df['accVal']), np.max(df['accVal'])))
+        new_vals.append(-1*renormalize_to_log(i, (np.min(df['accVal']), np.max(df['accVal'])),(0,1)))
 
     y = pf.classes.audio.Signal(wav, sampling_rate=sample_rate)
     for ind, freq_c in enumerate(df['freq']):
