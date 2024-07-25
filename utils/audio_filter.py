@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 
 import utils
 
+'''
+Old method
+'''
 def create_filter_block(sample_rate, show_plot=False):
     filter_config = utils.util.get_config() 
 

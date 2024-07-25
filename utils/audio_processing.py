@@ -13,12 +13,19 @@ def renormalize(n, range1, range2):
     delta2 = range2[1] - range2[0]
     return (delta2 * (n - range1[0]) / delta1) + range2[0]
 
+#https://math.stackexchange.com/questions/970094/convert-a-linear-scale-to-a-logarithmic-scale
+def convert_to_log(n, min, max, b=1):
+    k = b/(np.log10(max+b) - np.log10(min+b))
+    c = -1 * np.log10(min+b) * k
+
+    return k*np.log10(b+n)+c
+
 
 def change_loudness(wav, loudness, loudness_meter):
     wav = pyln.normalize.peak(wav, -1.0)
-    # print('Loudness before = ',loudness_meter.integrated_loudness(wav))
+    print('Loudness before = ',loudness_meter.integrated_loudness(wav))
     wav = pyln.normalize.loudness(wav, loudness_meter.integrated_loudness(wav), loudness)
-    # print('Loudness after = ',loudness_meter.integrated_loudness(wav))
+    print('Loudness after = ',loudness_meter.integrated_loudness(wav))
 
 
     # Hack for gain increase. Only needed with IPython.Audio. In any case PyloudNorm clips samples on gain increase.
@@ -105,22 +112,26 @@ def pitch_shift_centroid(wav, limit=1000, sample_rate=16000, loudness_meter=None
     return wav_compressed
 
 
+##
+## Old Method
+##
+# def equalize_audio(wav, sample_rate=16000, loudness_meter=None, loudness=-14.0):
+#     eq = create_filter_block(sample_rate)
+#     eq.reset()
+#     audio = eq.process_block(wav)
+#     audio /= np.max(np.abs(audio))
+#     if loudness_meter is not None:
+#         audio = change_loudness(audio, loudness, loudness_meter)
+#     return audio
+
+
 def equalize_audio(wav, sample_rate=16000, loudness_meter=None, loudness=-14.0):
-    eq = create_filter_block(sample_rate)
-    eq.reset()
-    audio = eq.process_block(wav)
-    audio /= np.max(np.abs(audio))
-    if loudness_meter is not None:
-        audio = change_loudness(audio, loudness, loudness_meter)
-    return audio
-
-
-def equalize_audio_2(wav, sample_rate=16000, loudness_meter=None, loudness=-14.0):
 
     df = pd.read_csv('freq-response-DRAKE-MF-BLACK-raw-1721643327.220492.csv')
     new_vals = []
     for i in df['accVal']:
-        new_vals.append(-1*renormalize(i, (np.min(df['accVal']),np.max(df['accVal'])), (0,0.5)))
+        #new_vals.append(-1*renormalize(i, (np.min(df['accVal']),np.max(df['accVal'])), (0,0.5)))
+        new_vals.append(-1*convert_to_log(i, np.min(df['accVal']), np.max(df['accVal'])))
 
     y = pf.classes.audio.Signal(wav, sampling_rate=sample_rate)
     for ind, freq_c in enumerate(df['freq']):
