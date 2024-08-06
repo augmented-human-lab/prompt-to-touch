@@ -13,6 +13,8 @@ from audioldm2.utilities import *
 from audioldm2.utilities.audio import *
 from audioldm2.utilities.data import *
 
+from audioldm2 import text_to_audio
+
 def get_model(model_name, duration=10.0, latent_t_per_second=25.6):
     print('Loading model')
     
@@ -21,6 +23,21 @@ def get_model(model_name, duration=10.0, latent_t_per_second=25.6):
 
     print('Model loaded')
     return latent_diffusion
+
+def sample_multiple(latent_diffusion, target_text, n_candidates=3, ddim_steps=100, \
+                                    guidance_scale=3.0, random_seed=42, latent_t_per_second=25.6,\
+                                    disable_tqdmoutput=False):
+    waveform = text_to_audio(
+        latent_diffusion=latent_diffusion,
+        text=target_text,
+        seed=random_seed,
+        duration=10.0,
+        ddim_steps = ddim_steps,
+        guidance_scale=guidance_scale,
+        n_candidate_gen_per_text=int(n_candidates),
+        latent_t_per_second=latent_t_per_second,
+    )
+    return waveform
 
 def sample(latent_diffusion, target_text, batch_size=1, ddim_steps=100, \
                                     guidance_scale=3.0, random_seed=42, \

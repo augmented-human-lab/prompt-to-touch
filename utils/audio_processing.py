@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.signal import butter, lfilter
+from scipy.signal import butter, lfilter, cheby1
 import torch
 import librosa
 from utils.util import * 
@@ -34,15 +34,14 @@ def change_loudness(wav, loudness, loudness_meter):
     wav = pyln.normalize.peak(wav, -1.0)
     print('Loudness before = ',loudness_meter.integrated_loudness(wav))
     wav = pyln.normalize.loudness(wav, loudness_meter.integrated_loudness(wav), loudness)
-    print('Loudness after = ',loudness_meter.integrated_loudness(wav))
-
 
     # Hack for gain increase. Only needed with IPython.Audio. In any case PyloudNorm clips samples on gain increase.
-    # if is_interactive(): #see util.py
-    #     if np.max(np.abs(wav))>1.0:
-    #         wav = pyln.normalize.peak(wav, -1.0)
-    #         print('Hack for gain increase for IPython. Peak norm if peaks>1.0 implemented. Loudness is = ',loudness_meter.integrated_loudness(wav))
-    
+    if is_interactive(): #see util.py
+        if np.max(np.abs(wav))>1.0:
+            wav = pyln.normalize.peak(wav, -1.0)
+            print('--')
+            # print('Hack for gain increase for IPython. Peak norm if peaks>1.0 implemented. Loudness is = ',loudness_meter.integrated_loudness(wav))
+    print('Loudness after = ',loudness_meter.integrated_loudness(wav))
     return wav
 
 
@@ -73,7 +72,8 @@ def compress_spectrogram_simple(wav, limit=1000, hop_length=128, stft_channels=5
     return wav_compressed
 
 def compress_spectrogram_with_centroid(wav, limit=1000, hop_length=128, stft_channels=512, sample_rate=16000, loudness_meter=None, loudness=-14.0):
-    source_wav_pghi = zeropad(wav, int(np.floor(len(wav)/hop_length)) * hop_length )
+    source_wav_pghi = preprocess_signal(wav)
+    source_wav_pghi = zeropad(source_wav_pghi, int(np.floor(len(source_wav_pghi)/hop_length)) * hop_length )
     source_wav_pghi_ = pghi_stft(source_wav_pghi, stft_channels=stft_channels, hop_size=hop_length)[0]
     source_wav_pghi_ = torch.from_numpy(source_wav_pghi_)
 
@@ -89,6 +89,7 @@ def compress_spectrogram_with_centroid(wav, limit=1000, hop_length=128, stft_cha
     num_bin_til_limit = int(np.floor(np.count_nonzero(fft_bins<limit)))
     
     kernel_size = int(np.floor(num_bin_til_centroid/(num_bin_til_limit)))+1
+    print(fft_bins_len, num_bin_til_centroid, num_bin_til_limit, kernel_size) 
 
     maxpool_fn = torch.nn.AvgPool2d(kernel_size=(kernel_size,1),stride=(kernel_size,1))
     
@@ -117,6 +118,7 @@ def pitch_shift_centroid(wav, limit=1000, sample_rate=16000, loudness_meter=None
     print("Mean Spectral Centroid = ", mean_spec_centroid, " Pitch Shift Steps = ", num_steps)
 
     wav_compressed = change_loudness(pitch_shifted_wav, loudness, loudness_meter)
+    print("Mean Spectral Centroid = ", mean_spec_centroid, " Pitch Shift Steps = ", num_steps, " Final Shifter Centroid = ", np.mean(librosa.feature.spectral_centroid(wav_compressed, sr=sample_rate)))
         
     return wav_compressed
 
@@ -134,13 +136,17 @@ def pitch_shift_centroid(wav, limit=1000, sample_rate=16000, loudness_meter=None
 #     return audio
 
 
-def equalize_audio(wav, sample_rate=16000, loudness_meter=None, loudness=-14.0):
+def equalize_audio(wav, type="MF", sample_rate=16000):#, loudness_meter=None, loudness=-14.0):
 
-    df = pd.read_csv('freq-response-DRAKE-MF-BLACK-raw-1721643327.220492.csv')
+    freq_response_file = 'freq-response-DRAKE-MF-BLACK-raw-1721643327.220492.csv'
+    if type == "LF":
+        freq_response_file = 'freq-response-DRAKE-MF-BLACK-raw-1721643327.220492.csv'
+    elif type == "HF":
+        freq_response_file = 'freq-response-DRAKE-MF-BLACK-raw-1721643327.220492.csv'
+        
+    df = pd.read_csv(freq_response_file)
     new_vals = []
     for i in df['accVal']:
-        #new_vals.append(-1*renormalize(i, (np.min(df['accVal']),np.max(df['accVal'])), (0,0.5)))
-        #new_vals.append(-1*convert_to_log(i, np.min(df['accVal']), np.max(df['accVal'])))
         new_vals.append(-1*renormalize_to_log(i, (np.min(df['accVal']), np.max(df['accVal'])),(0,1)))
 
     y = pf.classes.audio.Signal(wav, sampling_rate=sample_rate)
@@ -148,10 +154,19 @@ def equalize_audio(wav, sample_rate=16000, loudness_meter=None, loudness=-14.0):
         y = pf.dsp.filter.bell(signal=y, center_frequency=freq_c, gain=new_vals[ind], quality=4)
         
     audio = y._data[0]/np.max(np.abs(y._data[0]))
-    if loudness_meter is not None:
-        audio = change_loudness(audio, loudness, loudness_meter)
+    # if loudness_meter is not None:
+    #     audio = change_loudness(audio, loudness, loudness_meter)
     return audio
 
+
+def cheby_lowpass(data, lowcut, fs, order=5, btype='lowpass'):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    rp = 0.0001
+    b, a = cheby1(order, rp, low)
+
+    y = lfilter(b, a, data)
+    return y
 
 def butter_bandpass(lowcut, highcut, fs, order=5,btype='bandpass'):
     nyq = 0.5 * fs
