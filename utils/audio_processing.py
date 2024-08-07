@@ -136,21 +136,33 @@ def pitch_shift_centroid(wav, limit=1000, sample_rate=16000, loudness_meter=None
 #     return audio
 
 
-def equalize_audio(wav, type="MF", sample_rate=16000):#, loudness_meter=None, loudness=-14.0):
+def equalize_audio(wav, type="BLACK", sample_rate=16000, minval=None, maxval=None):#, loudness_meter=None, loudness=-14.0):
 
-    freq_response_file = 'freq-response-DRAKE-MF-BLACK-raw-1721643327.220492.csv'
-    if type == "LF":
-        freq_response_file = 'freq-response-DRAKE-MF-BLACK-raw-1721643327.220492.csv'
-    elif type == "HF":
-        freq_response_file = 'freq-response-DRAKE-MF-BLACK-raw-1721643327.220492.csv'
+    freq_response_file = ''
+    if type == "BLACK":
+        freq_response_file = 'smooth_rollAvg6_freq-response-DRAKE-BLACK-RAW-0.75-1722943603.275152.csv'
+    elif type == "YELLOW":
+        freq_response_file = 'smooth_rollAvg6_freq-response-DRAKE-YELLOW-RAW-0.75-1722942712.900473.csv'
+    elif type == "RED":
+        freq_response_file = 'smooth_rollAvg6_freq-response-DRAKE-RED-RAW-0.75-1722937125.680299.csv'
+    elif type == "WHITE":
+        freq_response_file = 'smooth_rollAvg6_freq-response-DRAKE-WHITE-RAW-0.75-1722941149.946043.csv'
         
     df = pd.read_csv(freq_response_file)
     new_vals = []
-    for i in df['accVal']:
-        new_vals.append(-1*renormalize_to_log(i, (np.min(df['accVal']), np.max(df['accVal'])),(0,1)))
 
+    if minval is None:
+        minval = np.min(df['smoothed_accVals'])
+    if maxval is None:
+        maxval = np.max(df['smoothed_accVals'])
+    for i in df['smoothed_accVals']:
+        # print(i)
+        # new_vals.append(-1*renormalize_to_log(i, (np.min(df['smoothed_accVals']), np.max(df['smoothed_accVals'])),(0,1)))
+        new_vals.append(-1*renormalize(i, (minval, maxval),(0,1)))
+
+    
     y = pf.classes.audio.Signal(wav, sampling_rate=sample_rate)
-    for ind, freq_c in enumerate(df['freq']):
+    for ind, freq_c in enumerate(df['freqVals']):
         y = pf.dsp.filter.bell(signal=y, center_frequency=freq_c, gain=new_vals[ind], quality=4)
         
     audio = y._data[0]/np.max(np.abs(y._data[0]))
