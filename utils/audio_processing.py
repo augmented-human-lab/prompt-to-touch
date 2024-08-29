@@ -32,16 +32,16 @@ def renormalize_to_log(n, range1, range2, b=10):
 
 def change_loudness(wav, loudness, loudness_meter):
     wav = pyln.normalize.peak(wav, -1.0)
-    print('Loudness before = ',loudness_meter.integrated_loudness(wav))
+    # print('Loudness before = ',loudness_meter.integrated_loudness(wav))
     wav = pyln.normalize.loudness(wav, loudness_meter.integrated_loudness(wav), loudness)
 
     # Hack for gain increase. Only needed with IPython.Audio. In any case PyloudNorm clips samples on gain increase.
     if is_interactive(): #see util.py
         if np.max(np.abs(wav))>1.0:
             wav = pyln.normalize.peak(wav, -1.0)
-            print('--')
+            # print('--')
             # print('Hack for gain increase for IPython. Peak norm if peaks>1.0 implemented. Loudness is = ',loudness_meter.integrated_loudness(wav))
-    print('Loudness after = ',loudness_meter.integrated_loudness(wav))
+    # print('Loudness after = ',loudness_meter.integrated_loudness(wav))
     return wav
 
 
@@ -158,7 +158,7 @@ def equalize_audio(wav, type="BLACK", sample_rate=16000, minval=None, maxval=Non
     for i in df['smoothed_accVals']:
         # print(i)
         # new_vals.append(-1*renormalize_to_log(i, (np.min(df['smoothed_accVals']), np.max(df['smoothed_accVals'])),(0,1)))
-        new_vals.append(-1*renormalize(i, (minval, maxval),(0,1)))
+        new_vals.append(-1*renormalize_to_log(i, (minval, maxval),(0,1)))
 
     
     y = pf.classes.audio.Signal(wav, sampling_rate=sample_rate)
@@ -208,3 +208,15 @@ def butter_bandpass_filter_withgain(audio, lowcut, highcut, fs, order=5, btype='
     b = b * gain
     y = lfilter(b, a, audio)
     return y
+
+
+def applyFBFadeFilter(forward_fadetime,backward_fadetime,signal,fs,expo=1):
+    forward_num_fad_samp = int(forward_fadetime*fs) 
+    backward_num_fad_samp = int(backward_fadetime*fs) 
+    signal_length = len(signal) 
+    fadefilter = np.ones(signal_length)
+    if forward_num_fad_samp>0:
+        fadefilter[0:forward_num_fad_samp]=np.linspace(0,1,forward_num_fad_samp)**expo
+    if backward_num_fad_samp>0:
+        fadefilter[signal_length-backward_num_fad_samp:signal_length]=np.linspace(1,0,backward_num_fad_samp)**expo
+    return fadefilter*signal
