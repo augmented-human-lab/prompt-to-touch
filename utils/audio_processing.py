@@ -136,17 +136,19 @@ def pitch_shift_centroid(wav, limit=1000, sample_rate=16000, loudness_meter=None
 #     return audio
 
 
-def equalize_audio(wav, type="BLACK", sample_rate=16000, minval=None, maxval=None):#, loudness_meter=None, loudness=-14.0):
+def equalize_audio(wav, type="BLACK", sample_rate=16000, minval=None, maxval=None, freq_response_dir=''):#, loudness_meter=None, loudness=-14.0):
 
     freq_response_file = ''
     if type == "BLACK":
-        freq_response_file = 'smooth_rollAvg6_freq-response-DRAKE-BLACK-RAW-0.75-1722943603.275152.csv'
+        freq_response_file = freq_response_dir+'smooth_rollAvg6_freq-response-DRAKE-BLACK-RAW-0.75-1722943603.275152.csv'
     elif type == "YELLOW":
-        freq_response_file = 'smooth_rollAvg6_freq-response-DRAKE-YELLOW-RAW-0.75-1722942712.900473.csv'
+        freq_response_file = freq_response_dir+'smooth_rollAvg6_freq-response-DRAKE-YELLOW-RAW-0.75-1722942712.900473.csv'
     elif type == "RED":
-        freq_response_file = 'smooth_rollAvg6_freq-response-DRAKE-RED-RAW-0.75-1722937125.680299.csv'
+        freq_response_file = freq_response_dir+'smooth_rollAvg6_freq-response-DRAKE-RED-RAW-0.75-1722937125.680299.csv'
     elif type == "WHITE":
-        freq_response_file = 'smooth_rollAvg6_freq-response-DRAKE-WHITE-RAW-0.75-1722941149.946043.csv'
+        freq_response_file = freq_response_dir+'smooth_rollAvg6_freq-response-DRAKE-WHITE-RAW-0.75-1722941149.946043.csv'
+
+    print(freq_response_file)
         
     df = pd.read_csv(freq_response_file)
     new_vals = []
