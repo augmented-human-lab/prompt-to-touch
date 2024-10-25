@@ -1,34 +1,7 @@
-# prompt-to-touch
+# Prompt-to-Touch: Towards Enabling Automatic Haptic Effect Generation from Text Prompts
 
+This repository is the supplementary codebase for the paper submitted at CHI 2025
 
-## Work In Progress Readme.
+In this paper, we introduce Prompt-to-Touch, a novel multi-step pipeline for generating haptic effects based on textual descriptions of a target haptic experience. Our pipeline first translates the haptic effect description to an audio effect description using our **Foley-Interpreter** component. It then uses a text-to-audio model to generate an audio effect sample from the audio description. Finally, the audio sample is processed and converted into a perceivable haptic effect using our **Dynamic-Audio-Processor** component. Our pipeline opens up a universal language interface that makes haptic effect generation accessible to non-experts, allows easy customization, and offers integration into automation processes for various applications. We validate our approach in two user studies (n=20, n=10) and show how haptic effects generated using our pipeline can enhance immersive multimedia experiences, abstract desktop/XR interactions, and social communication. We provide open-source code to support easy replication and further extensions to our pipeline in the future.
 
-
-Important: Create .env file under config folder with Open AI creds. 
-
-### Setup
-* Clone this repo
-* Install dependencies (from the original AudioLDM repo as shown below) by creating a new conda environment called ```prompt-to-touch```
-```
-conda create -n prompt-to-touch python=3.10; conda activate prompt-to-touch
-/home/purnima/anaconda3/envs/prompt-to-touch/bin/pip install git+https://github.com/haoheliu/AudioLDM2.git
-/home/purnima/anaconda3/envs/prompt-to-touch/bin/pip install noisereduce  
-/home/purnima/anaconda3/envs/prompt-to-touch/bin/pip install torch_pitch_shift  
-/home/purnima/anaconda3/envs/prompt-to-touch/bin/pip install cython==0.29.19  
-/home/purnima/anaconda3/envs/prompt-to-touch/bin/pip install tifresi==0.1.2  
-/home/purnima/anaconda3/envs/prompt-to-touch/bin/pip install pyloudnorm
-/home/purnima/anaconda3/envs/prompt-to-touch/bin/pip install openai
-/home/purnima/anaconda3/envs/prompt-to-touch/bin/pip pip install ipython
-pip install audio_dspy ---Not used anymore. Does not support neg Bell gain
-pip install pyfar
-```
-audio_dspy: https://audio-dspy.readthedocs.io/en/latest/index.html (make note)
-  
-Add the newly created environment to Jupyter Notebooks
-```
-python -m ipykernel install --user --name prompt-to-touch
-```
-
-
-conda create -n prompt-to-touch python=3.10; conda activate prompt-to-touch
-
+Please see the Google Colab notebook for installation instructions and generate haptic effect responses from text prompts - [Notebook](https://colab.research.google.com/drive/1eDPuJmsv1oYihqOeKw-IezjYs7Tv9smV?usp=sharing)
