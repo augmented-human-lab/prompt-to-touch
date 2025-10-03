@@ -77,7 +77,7 @@ def compress_spectrogram_with_centroid(wav, limit=1000, hop_length=128, stft_cha
     source_wav_pghi_ = pghi_stft(source_wav_pghi, stft_channels=stft_channels, hop_size=hop_length)[0]
     source_wav_pghi_ = torch.from_numpy(source_wav_pghi_)
 
-    spec_centroids = librosa.feature.spectral_centroid(wav, sr=sample_rate)
+    spec_centroids = librosa.feature.spectral_centroid(y=wav, sr=sample_rate)
     mean_spec_centroid = np.mean(spec_centroids)
     std_spec_centroid = np.std(spec_centroids)
     print("Mean Spectral Centroid = ", mean_spec_centroid)
@@ -109,16 +109,16 @@ def compress_spectrogram_with_centroid(wav, limit=1000, hop_length=128, stft_cha
 
 
 def pitch_shift_centroid(wav, limit=1000, sample_rate=16000, loudness_meter=None, loudness=-14.0):
-    spec_centroids = librosa.feature.spectral_centroid(wav, sr=sample_rate)
+    spec_centroids = librosa.feature.spectral_centroid(y=wav, sr=sample_rate)
     mean_spec_centroid = np.mean(spec_centroids)
     
 
     num_steps = 12 * np.log2(mean_spec_centroid/limit)
-    pitch_shifted_wav = librosa.effects.pitch_shift(wav, sr=sample_rate, n_steps=-1*num_steps)
+    pitch_shifted_wav = librosa.effects.pitch_shift(y=wav, sr=sample_rate, n_steps=-1*num_steps)
     print("Mean Spectral Centroid = ", mean_spec_centroid, " Pitch Shift Steps = ", num_steps)
 
     wav_compressed = change_loudness(pitch_shifted_wav, loudness, loudness_meter)
-    print("Mean Spectral Centroid = ", mean_spec_centroid, " Pitch Shift Steps = ", num_steps, " Final Shifter Centroid = ", np.mean(librosa.feature.spectral_centroid(wav_compressed, sr=sample_rate)))
+    print("Mean Spectral Centroid = ", mean_spec_centroid, " Pitch Shift Steps = ", num_steps, " Final Shifter Centroid = ", np.mean(librosa.feature.spectral_centroid(y=wav_compressed, sr=sample_rate)))
         
     return wav_compressed
 
