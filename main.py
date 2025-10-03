@@ -40,19 +40,30 @@ ddim_steps = 100
 Foley Interpreter
 '''
 def foley_interpreter(txt, client):
-    content = "Describe a language phrase consisting of a noun verb adjective adverb like "+\
-            "'a brown cat running purposefully and quickly' that would be a sound which could be also perceivable "+\
-            "as touch sensation and resembles "+txt+". Use simple words and long descriptions when generating the language phrase."
+    content = "Your job is to come up with a description of an audio effect for the description of the haptic touch experience. That means you describe an audio effect that is likely to exist that could resemble the key characteristics of the described haptic touch experience. If the description contains non audible aspects, try imagine what audio effects may result in the haptic experience. Here is the description of the haptic touch experience: '"+txt.lower()+"'. How would you describe the translated audio effect? Think step by step. If applicable and meaningful to the sound, describe how the sound effect evolves step by step. Keep in mind that only one speaker is available to play the effect. "
+
     response = client.chat.completions.create(
-      model="gpt-3.5-turbo",
+      model="gpt-4o",
       messages=[
-         {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": content}
+          {"role": "system", "content": "You are an expert haptic feedback designer."},
+          {"role": "user", "content": content}
       ]
     )
 
-    foley_language_phrase = response.choices[0].message.content.split('"')[1]
+    initial_response = response.choices[0].message.content
+    response = client.chat.completions.create(
+      model="gpt-4o",
+      messages=[
+        {"role": "system", "content": "You are an expert in writing audio captions for sound effects."},
+        {"role": "user", "content": content},
+        {"role": "assistant", "content": initial_response},
+        {"role": "user", "content": "Now output the final audio effect description in the format of a short audio caption. The effect should be unique and highlight the key characteristic of the haptic description. If the sound effect evolves over time, only focus on the the most important step part that is most characteristic for the sound effect. Ensure that the caption is in double-quotes. The audio caption should be short, and descriptive, focusing on non-technical descriptions of a sound effect. Ignore background noise and avoid humming."}
+      ]
+    )
+
+    foley_language_phrase = response.choices[0].message.content
     print(foley_language_phrase)
+    
     return foley_language_phrase
 
 
