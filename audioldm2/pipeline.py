@@ -164,7 +164,25 @@ def build_model(ckpt_path=None, config=None, device=None, model_name="audioldm2-
 
     checkpoint = torch.load(resume_from_checkpoint, map_location=device)
 
-    latent_diffusion.load_state_dict(checkpoint["state_dict"])
+    # Handle incompatible keys by loading with strict=False
+    try:
+        latent_diffusion.load_state_dict(checkpoint["state_dict"])
+    except RuntimeError as e:
+        print(f"Warning: {e}")
+        print("Loading with strict=False to handle incompatible keys...")
+        
+        # Remove problematic keys from the checkpoint
+        state_dict = checkpoint["state_dict"]
+        problematic_keys = [key for key in state_dict.keys() if "position_ids" in key]
+        for key in problematic_keys:
+            print(f"Removing problematic key: {key}")
+            del state_dict[key]
+        
+        missing_keys, unexpected_keys = latent_diffusion.load_state_dict(state_dict, strict=False)
+        if missing_keys:
+            print(f"Missing keys: {missing_keys}")
+        if unexpected_keys:
+            print(f"Unexpected keys: {unexpected_keys}")
     
     latent_diffusion.eval()
     latent_diffusion = latent_diffusion.to(device)
