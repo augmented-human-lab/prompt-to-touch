@@ -1,12 +1,19 @@
+
 import numpy as np
 from scipy.signal import butter, lfilter, cheby1
 import torch
 import librosa
-from utils.util import * 
+from utils.util import *
 # from utils.audio_filter import create_filter_block
-
 import pyfar as pf
 import pandas as pd
+import json
+import os
+
+# Load equalizer profiles index at module import
+EQUALIZER_PROFILE_INDEX_PATH = os.path.join(os.path.dirname(__file__), '../equalizer_profiles/equalizer_profiles_index.json')
+with open(EQUALIZER_PROFILE_INDEX_PATH, 'r') as f:
+    EQUALIZER_PROFILE_INDEX = json.load(f)
 
 def renormalize(n, range1, range2):
     delta1 = range1[1] - range1[0]
@@ -136,20 +143,20 @@ def pitch_shift_centroid(wav, limit=1000, sample_rate=16000, loudness_meter=None
 #     return audio
 
 
-def equalize_audio(wav, type="BLACK", sample_rate=16000, minval=None, maxval=None, freq_response_dir=''):#, loudness_meter=None, loudness=-14.0):
 
-    freq_response_file = ''
-    if type == "BLACK":
-        freq_response_file = freq_response_dir+'smooth_rollAvg6_freq-response-DRAKE-BLACK-RAW-0.75-1722943603.275152.csv'
-    elif type == "YELLOW":
-        freq_response_file = freq_response_dir+'smooth_rollAvg6_freq-response-DRAKE-YELLOW-RAW-0.75-1722942712.900473.csv'
-    elif type == "RED":
-        freq_response_file = freq_response_dir+'smooth_rollAvg6_freq-response-DRAKE-RED-RAW-0.75-1722937125.680299.csv'
-    elif type == "WHITE":
-        freq_response_file = freq_response_dir+'smooth_rollAvg6_freq-response-DRAKE-WHITE-RAW-0.75-1722941149.946043.csv'
+def equalize_audio(wav, equalizer_profile=None, sample_rate=16000, minval=None, maxval=None):
+    # Find the profile dict by name
+    profile_dict = None
+    for profile in EQUALIZER_PROFILE_INDEX:
+        if profile["name"] == equalizer_profile:
+            profile_dict = profile
+            break
+    if profile_dict is None:
+        raise ValueError(f"Equalizer profile '{equalizer_profile}' not found in index.")
 
-    print(freq_response_file)
-        
+    freq_response_file = os.path.join(os.path.dirname(EQUALIZER_PROFILE_INDEX_PATH), profile_dict["file"])
+    print(f"Using equalizer profile file: {freq_response_file}")
+
     df = pd.read_csv(freq_response_file)
     new_vals = []
 
@@ -158,18 +165,13 @@ def equalize_audio(wav, type="BLACK", sample_rate=16000, minval=None, maxval=Non
     if maxval is None:
         maxval = np.max(df['smoothed_accVals'])
     for i in df['smoothed_accVals']:
-        # print(i)
-        # new_vals.append(-1*renormalize_to_log(i, (np.min(df['smoothed_accVals']), np.max(df['smoothed_accVals'])),(0,1)))
         new_vals.append(-1*renormalize_to_log(i, (minval, maxval),(0,1)))
 
-    
     y = pf.classes.audio.Signal(wav, sampling_rate=sample_rate)
     for ind, freq_c in enumerate(df['freqVals']):
         y = pf.dsp.filter.bell(signal=y, center_frequency=freq_c, gain=new_vals[ind], quality=4)
-        
+
     audio = y._data[0]/np.max(np.abs(y._data[0]))
-    # if loudness_meter is not None:
-    #     audio = change_loudness(audio, loudness, loudness_meter)
     return audio
 
 

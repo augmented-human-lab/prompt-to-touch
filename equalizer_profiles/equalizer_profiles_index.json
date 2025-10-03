@@ -1,0 +1,30 @@
+[
+    {
+        "name": "DRAKE-BLACK-V1",
+        "manufacturer": "TITAN Haptics",
+        "description": "Drake Black V1",
+        "file": "drake/smooth_rollAvg6_freq-response-DRAKE-BLACK-RAW-0.75-1722943603.275152.csv",
+        "url": "https://www.titanhaptics.com/products/drake"
+    },
+    {
+        "name": "DRAKE-RED-V1",
+        "manufacturer": "TITAN Haptics",
+        "description": "Drake Red V1",
+        "file": "drake/smooth_rollAvg6_freq-response-DRAKE-RED-RAW-0.75-1722937125.680299.csv",
+        "url": "https://www.titanhaptics.com/products/drake"
+    },
+    {
+        "name": "DRAKE-WHITE-V1",
+        "manufacturer": "TITAN Haptics",
+        "description": "Drake White V1",
+        "file": "drake/smooth_rollAvg6_freq-response-DRAKE-WHITE-RAW-0.75-1722941149.946043.csv",
+        "url": "https://www.titanhaptics.com/products/drake"
+    },
+    {
+        "name": "DRAKE-YELLOW-V1",
+        "manufacturer": "TITAN Haptics",
+        "description": "Drake Yellow V1",
+        "file": "drake/smooth_rollAvg6_freq-response-DRAKE-YELLOW-RAW-0.75-1722942712.900473.csv",
+        "url": "https://www.titanhaptics.com/products/drake"
+    }
+]
