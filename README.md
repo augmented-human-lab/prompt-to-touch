@@ -1,6 +1,6 @@
 # Prompt-to-Touch: Towards Enabling Automatic Haptic Effect Generation from Text Prompts
 
-This repository is the supplementary codebase for the paper submitted at CHI 2025
+This repository is the supplementary codebase for the paper submitted at TOCHI.
 
 In this paper, we introduce Prompt-to-Touch, a novel multi-step pipeline for generating haptic effects based on textual descriptions of a target haptic experience. Our pipeline first translates the haptic effect description to an audio effect description using our **Foley-Interpreter** component. It then uses a text-to-audio model to generate an audio effect sample from the audio description. Finally, the audio sample is processed and converted into a perceivable haptic effect using our **Dynamic-Audio-Processor** component. Our pipeline opens up a universal language interface that makes haptic effect generation accessible to non-experts, allows easy customization, and offers integration into automation processes for various applications. We validate our approach in two user studies (n=20, n=10) and show how haptic effects generated using our pipeline can enhance immersive multimedia experiences, abstract desktop/XR interactions, and social communication. We provide open-source code to support easy replication and further extensions to our pipeline in the future.
 
